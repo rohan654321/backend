@@ -2,10 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
+const helmet = require('helmet');
+const hpp = require('hpp');
 
 // Import middleware
 const { logger, errorLogger } = require('./middleware/logger');
-const { securityHeaders, xssProtection, preventHpp, secureHeaders } = require('./middleware/security');
 const { apiLimiter, authLimiter, allocationLimiter } = require('./middleware/rateLimiter');
 const { corsOptions } = require('./middleware/cors');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -20,11 +21,11 @@ connectDB();
 
 const app = express();
 
-// Security middleware (order matters!)
-app.use(securityHeaders);
-app.use(xssProtection);
-app.use(preventHpp);
-app.use(secureHeaders);
+// Security middleware
+app.use(helmet({
+  xssFilter: true,
+}));
+app.use(hpp());
 app.use(cors(corsOptions));
 
 // Logging middleware
@@ -37,28 +38,30 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting
-app.use('/api/', apiLimiter); // General rate limit for all API routes
-app.use('/api/auth/', authLimiter); // Stricter limit for auth routes
-app.use('/api/allocations/', allocationLimiter); // Limit for allocation operations
+app.use('/api/', apiLimiter);
 
-// Cache middleware (apply to specific routes in routes files)
-
-// Routes
+// Routes - IMPORTANT: Make sure these are mounted correctly
 app.use('/api/master', require('./routes/masterRoutes'));
 app.use('/api/applicants', require('./routes/applicantRoutes'));
 app.use('/api/allocations', require('./routes/allocationRoutes'));
 app.use('/api/admissions', require('./routes/admissionRoutes'));
-app.use('/api/dashboard', cache(300), require('./routes/dashboardRoutes')); // Cache dashboard for 5 minutes
+app.use('/api/dashboard', require('./routes/dashboardRoutes')); // This should be /api/dashboard
 
-// Error handling middleware (should be last)
+// Test route to verify server is working
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API is working' });
+});
+
+// Error handling middleware
 app.use(errorLogger);
 app.use(errorHandler);
 
-// 404 handler
+// 404 handler - This should be last
 app.use((req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.url}`);
   res.status(404).json({ 
     success: false, 
-    error: 'Route not found' 
+    error: `Route not found: ${req.method} ${req.url}` 
   });
 });
 
@@ -67,4 +70,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Test the API at: http://localhost:${PORT}/api/test`);
 });

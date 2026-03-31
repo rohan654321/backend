@@ -6,14 +6,23 @@ const AcademicYear = require('../models/AcademicYear');
 
 exports.getDashboardStats = async (req, res) => {
   try {
+    console.log('Fetching dashboard stats...');
+    
     const academicYear = await AcademicYear.findOne({ isActive: true });
     if (!academicYear) {
-      return res.status(404).json({ success: false, error: 'No active academic year found' });
+      return res.status(404).json({ 
+        success: false, 
+        error: 'No active academic year found' 
+      });
     }
+    
+    console.log('Academic year found:', academicYear.year);
     
     // Get all seat matrices for current academic year
     const seatMatrices = await SeatMatrix.find({ academicYear: academicYear._id })
       .populate('program', 'name code');
+    
+    console.log(`Found ${seatMatrices.length} seat matrices`);
     
     // Calculate total intake and admitted
     let totalIntake = 0;
@@ -46,6 +55,8 @@ exports.getDashboardStats = async (req, res) => {
       .limit(10)
       .sort({ createdAt: -1 });
     
+    console.log('Dashboard stats fetched successfully');
+    
     res.json({
       success: true,
       data: {
@@ -59,7 +70,11 @@ exports.getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error in getDashboardStats:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -67,7 +82,10 @@ exports.getQuotaUtilization = async (req, res) => {
   try {
     const academicYear = await AcademicYear.findOne({ isActive: true });
     if (!academicYear) {
-      return res.status(404).json({ success: false, error: 'No active academic year found' });
+      return res.status(404).json({ 
+        success: false, 
+        error: 'No active academic year found' 
+      });
     }
     
     const seatMatrices = await SeatMatrix.find({ academicYear: academicYear._id })
@@ -89,6 +107,10 @@ exports.getQuotaUtilization = async (req, res) => {
       data: utilization,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error in getQuotaUtilization:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };

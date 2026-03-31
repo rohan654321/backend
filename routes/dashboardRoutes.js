@@ -5,6 +5,7 @@ const {
   getQuotaUtilization,
 } = require('../controllers/dashboardController');
 
+// Make sure routes are defined correctly
 router.get('/stats', getDashboardStats);
 router.get('/quota-utilization', getQuotaUtilization);
 

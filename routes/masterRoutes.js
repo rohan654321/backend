@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   createInstitution,
   getInstitutions,
+  updateInstitution,  // Make sure this is exported
+  deleteInstitution,  // Make sure this is exported
   createCampus,
   getCampuses,
   createDepartment,
@@ -19,6 +21,8 @@ const {
 // Institution routes
 router.post('/institutions', createInstitution);
 router.get('/institutions', getInstitutions);
+router.put('/institutions/:id', updateInstitution);  // This should work now
+router.delete('/institutions/:id', deleteInstitution);
 
 // Campus routes
 router.post('/campuses', createCampus);

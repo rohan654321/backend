@@ -1,5 +1,4 @@
 const helmet = require('helmet');
-const xss = require('xss-clean');
 const hpp = require('hpp');
 
 // Security middleware configuration
@@ -12,10 +11,8 @@ exports.securityHeaders = helmet({
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
+  xssFilter: true, // Enable XSS filter (replaces xss-clean)
 });
-
-// XSS protection
-exports.xssProtection = xss();
 
 // HTTP Parameter Pollution protection
 exports.preventHpp = hpp();
@@ -28,3 +25,49 @@ exports.secureHeaders = (req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 };
+
+// Custom XSS sanitization middleware (if needed)
+exports.xssSanitize = (req, res, next) => {
+  // Sanitize request body
+  if (req.body) {
+    req.body = sanitizeObject(req.body);
+  }
+  
+  // Sanitize query parameters
+  if (req.query) {
+    req.query = sanitizeObject(req.query);
+  }
+  
+  // Sanitize URL parameters
+  if (req.params) {
+    req.params = sanitizeObject(req.params);
+  }
+  
+  next();
+};
+
+// Helper function to sanitize objects recursively
+function sanitizeObject(obj) {
+  if (!obj) return obj;
+  
+  const sanitized = Array.isArray(obj) ? [] : {};
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      // Basic HTML escaping
+      sanitized[key] = value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeObject(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  
+  return sanitized;
+}

@@ -25,6 +25,65 @@ exports.getInstitutions = async (req, res) => {
   }
 };
 
+// Add this update institution method
+exports.updateInstitution = async (req, res) => {
+  try {
+    console.log('Updating institution with ID:', req.params.id);
+    console.log('Update data:', req.body);
+    
+    const institution = await Institution.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!institution) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Institution not found' 
+      });
+    }
+    
+    console.log('Institution updated successfully:', institution);
+    
+    res.json({ 
+      success: true, 
+      data: institution,
+      message: 'Institution updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating institution:', error);
+    res.status(400).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+// Add delete method
+exports.deleteInstitution = async (req, res) => {
+  try {
+    const institution = await Institution.findByIdAndDelete(req.params.id);
+    
+    if (!institution) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Institution not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Institution deleted successfully' 
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
 // Campus CRUD
 exports.createCampus = async (req, res) => {
   try {
