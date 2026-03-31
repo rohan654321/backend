@@ -26,7 +26,7 @@ app.use(helmet({
   xssFilter: true,
 }));
 app.use(hpp());
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Logging middleware
 app.use(logger);
